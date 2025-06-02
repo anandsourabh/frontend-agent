@@ -1,0 +1,323 @@
+// src/styles.scss
+@use '@angular/material' as mat;
+
+// Include the common styles for Angular Material
+@include mat.core();
+
+// Define custom colors
+$primary-color: #2640e8;
+$secondary-color: #293340;
+
+// Define the palettes for your theme
+$custom-primary: mat.define-palette(mat.$blue-palette, 500, 100, 900);
+$custom-accent: mat.define-palette(mat.$indigo-palette, A200, A100, A400);
+$custom-warn: mat.define-palette(mat.$red-palette);
+
+// Create the theme object
+$custom-theme: mat.define-light-theme((
+  color: (
+    primary: $custom-primary,
+    accent: $custom-accent,
+    warn: $custom-warn,
+  )
+));
+
+// Include theme styles for all components
+@include mat.all-component-themes($custom-theme);
+
+// Global styles
+* {
+  margin: 0;
+  //padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #f5f5f5;
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+// Utility classes
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.elevation-1 {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.elevation-2 {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+// Custom Material Design overrides
+.mat-mdc-card {
+  border-radius: 12px !important;
+}
+
+.mat-mdc-button {
+  border-radius: 8px !important;
+}
+
+.mat-mdc-raised-button {
+  border-radius: 8px !important;
+}
+
+.mat-mdc-form-field {
+  .mat-mdc-form-field-outline {
+    border-radius: 8px !important;
+  }
+}
+
+.mat-mdc-tab-group {
+  .mat-mdc-tab-label {
+    opacity: 0.7;
+    
+    &.mdc-tab--active {
+      opacity: 1;
+    }
+  }
+}
+
+// Chat specific styles
+.message-bubble {
+  border-radius: 18px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.user-message {
+  color: white;
+  margin-left: auto;
+}
+
+.bot-message {
+  //background-color: white;
+  color: #333;
+  //border: 1px solid #e0e0e0;
+}
+
+// Data table customizations
+.mat-mdc-table {
+  border-radius: 8px;
+  overflow: hidden;
+  
+  .mat-mdc-header-cell {
+    background-color: $secondary-color;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .mat-mdc-row:hover {
+    background-color: rgba(38, 64, 232, 0.05);
+  }
+}
+
+// Chart container styles
+.chart-container {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+// Loading states
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+// Error states
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #c62828;
+  margin: 8px 0;
+}
+
+// Success states
+.success-message {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #4caf50;
+  margin: 8px 0;
+}
+
+// Custom button styles
+.primary-button {
+  background-color: $primary-color !important;
+  color: white !important;
+  
+  &:hover {
+    background-color: darken($primary-color, 10%) !important;
+  }
+}
+
+.secondary-button {
+  background-color: $secondary-color !important;
+  color: white !important;
+  
+  &:hover {
+    background-color: lighten($secondary-color, 10%) !important;
+  }
+}
+
+// Responsive breakpoints
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none !important;
+  }
+  
+  .message-bubble {
+    max-width: 95%;
+  }
+  
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-hidden {
+    display: none !important;
+  }
+}
+
+// Animation classes
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+// Typing indicator animation (already included in chat component but adding global version)
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+.typing-dots span {
+  animation: typing 1.4s infinite;
+}
+
+// Sidebar styles
+.sidebar {
+  background-color: $secondary-color;
+  color: white;
+  
+  .mat-mdc-list-item {
+    color: white;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+// Expansion panel customizations
+.mat-expansion-panel {
+  border-radius: 8px !important;
+  margin-bottom: 8px;
+  
+  .mat-expansion-panel-header {
+    background-color: #f5f5f5;
+    
+    &:hover {
+      background-color: #eeeeee;
+    }
+  }
+}
+
+// Tab group customizations
+.mat-mdc-tab-group {
+  .mat-mdc-tab-header {
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .mat-mdc-tab {
+    &.mdc-tab--active {
+      .mdc-tab__text-label {
+        color: $primary-color;
+      }
+    }
+  }
+}
+
+// Snackbar customizations
+.mat-mdc-snack-bar-container {
+  &.success-snackbar {
+    --mdc-snackbar-container-color: #4caf50;
+  }
+  
+  &.error-snackbar {
+    --mdc-snackbar-container-color: #f44336;
+  }
+}

@@ -1,0 +1,344 @@
+<!-- Chat Container -->
+<div class="chat-container">
+  
+  <!-- Header with Agent Status -->
+  <div class="chat-header">
+    <h2>AI Risk Advisor</h2>
+    
+    <div class="header-controls">
+      <!-- Agent Status Toggle -->
+      <button 
+        mat-icon-button 
+        (click)="toggleAgentStatus()"
+        [class.active]="showAgentStatus"
+        matTooltip="Agent Status">
+        <mat-icon>psychology</mat-icon>
+      </button>
+      
+      <!-- Feature Toggles -->
+      <button 
+        mat-icon-button 
+        (click)="toggleConfidenceScores()"
+        [class.active]="showConfidenceScores"
+        matTooltip="Show Confidence Scores">
+        <mat-icon>analytics</mat-icon>
+      </button>
+      
+      <button 
+        mat-icon-button 
+        (click)="toggleVoiceInput()"
+        [class.active]="voiceInputEnabled"
+        matTooltip="Voice Input">
+        <mat-icon>mic</mat-icon>
+      </button>
+      
+      <button 
+        mat-icon-button 
+        (click)="toggleSuggestions()"
+        [class.active]="showSuggestions"
+        matTooltip="Show Suggestions">
+        <mat-icon>lightbulb</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Agent Status Panel -->
+  <div class="agent-status-panel" *ngIf="showAgentStatus" [@slideDown]>
+    <div class="agent-status-header">
+      <h3>Agent Status</h3>
+      <button mat-icon-button (click)="refreshAgentStatus()" matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    
+    <div class="agent-grid">
+      <div 
+        *ngFor="let agent of agentStatus.agents | keyvalue" 
+        class="agent-card"
+        [class]="getAgentStatusColor(agent.value)">
+        
+        <div class="agent-info">
+          <div class="agent-name">{{ agent.key | titlecase }}</div>
+          <div class="agent-status">{{ getAgentStatusText(agent.value) }}</div>
+        </div>
+        
+        <div class="agent-metrics" *ngIf="showConfidenceScores">
+          <div class="metric">
+            <span class="label">Success Rate:</span>
+            <span class="value">{{ (agent.value.success_rate * 100) | number:'1.0-0' }}%</span>
+          </div>
+          <div class="metric">
+            <span class="label">Avg Time:</span>
+            <span class="value">{{ formatProcessingTime(agent.value.avg_response_time) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div class="error-banner" *ngIf="errorMessage" [@slideDown]>
+    <mat-icon>error</mat-icon>
+    <span>{{ errorMessage }}</span>
+    <button mat-icon-button (click)="clearError()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Messages Container -->
+  <div class="messages-container" #messagesContainer>
+    
+    <!-- Message Item -->
+    <div 
+      *ngFor="let message of messages" 
+      class="message-item"
+      [class.user-message]="message.isUser"
+      [class.assistant-message]="!message.isUser"
+      [class.error-message]="message.type === 'error'">
+      
+      <!-- Message Header -->
+      <div class="message-header" *ngIf="!message.isUser">
+        <div class="avatar">
+          <mat-icon *ngIf="message.type === 'error'">error</mat-icon>
+          <mat-icon *ngIf="message.type !== 'error'">smart_toy</mat-icon>
+        </div>
+        
+        <div class="message-meta">
+          <span class="sender">AI Risk Advisor</span>
+          <span class="timestamp">{{ message.timestamp | date:'short' }}</span>
+          
+          <!-- Confidence Score -->
+          <div class="confidence-score" *ngIf="showConfidenceScores && message.confidence">
+            <span 
+              class="confidence-badge"
+              [style.background-color]="getConfidenceColor(message.confidence)">
+              {{ getConfidenceText(message.confidence) }}
+            </span>
+          </div>
+          
+          <!-- Processing Time -->
+          <div class="processing-time" *ngIf="message.processingTime">
+            <mat-icon>schedule</mat-icon>
+            <span>{{ formatProcessingTime(message.processingTime) }}</span>
+          </div>
+          
+          <!-- Agent Count -->
+          <div class="agent-count" *ngIf="getAgentCount(message) > 0">
+            <mat-icon>psychology</mat-icon>
+            <span>{{ getAgentCount(message) }} agents</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Message Header -->
+      <div class="message-header" *ngIf="message.isUser">
+        <div class="message-meta">
+          <span class="sender">You</span>
+          <span class="timestamp">{{ message.timestamp | date:'short' }}</span>
+        </div>
+        <div class="avatar user">
+          <mat-icon>person</mat-icon>
+        </div>
+      </div>
+
+      <!-- Message Content -->
+      <div class="message-content">
+        
+        <!-- Text Content -->
+        <div class="text-content" [innerHTML]="message.content"></div>
+        
+        <!-- Data Display -->
+        <app-message 
+          *ngIf="hasData(message) || hasVisualization(message)"
+          [message]="message">
+        </app-message>
+        
+        <!-- Agent Responses Detail -->
+        <div class="agent-responses" *ngIf="message.agentResponses && showAgentStatus">
+          <div class="agent-responses-header">
+            <mat-icon>psychology</mat-icon>
+            <span>Agent Breakdown</span>
+          </div>
+          
+          <div class="agent-response-grid">
+            <div 
+              *ngFor="let agentResponse of message.agentResponses | keyvalue"
+              class="agent-response-card"
+              [class.success]="agentResponse.value.success"
+              [class.error]="!agentResponse.value.success">
+              
+              <div class="agent-response-header">
+                <span class="agent-name">{{ agentResponse.key | titlecase }}</span>
+                <mat-icon 
+                  class="status-icon"
+                  [class.success]="agentResponse.value.success"
+                  [class.error]="!agentResponse.value.success">
+                  {{ agentResponse.value.success ? 'check_circle' : 'error' }}
+                </mat-icon>
+              </div>
+              
+              <div class="agent-response-content" *ngIf="agentResponse.value.data">
+                <div class="response-summary">
+                  {{ agentResponse.value.data.explanation || agentResponse.value.data.summary || 'Processed successfully' }}
+                </div>
+                
+                <div class="response-metrics" *ngIf="showConfidenceScores">
+                  <span *ngIf="agentResponse.value.confidence_score">
+                    Confidence: {{ (agentResponse.value.confidence_score * 100) | number:'1.0-0' }}%
+                  </span>
+                  <span *ngIf="agentResponse.value.metadata?.processing_time">
+                    Time: {{ formatProcessingTime(agentResponse.value.metadata.processing_time) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Suggestions -->
+        <div class="message-suggestions" *ngIf="message.suggestions && message.suggestions.length > 0">
+          <div class="suggestions-header">
+            <mat-icon>lightbulb</mat-icon>
+            <span>Suggestions</span>
+          </div>
+          <div class="suggestion-chips">
+            <mat-chip 
+              *ngFor="let suggestion of message.suggestions"
+              (click)="selectSuggestion(suggestion)"
+              class="suggestion-chip">
+              {{ suggestion }}
+            </mat-chip>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Actions -->
+      <div class="message-actions" *ngIf="!message.isUser">
+        <button 
+          mat-icon-button 
+          (click)="copyMessage(message)"
+          matTooltip="Copy">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+        
+        <button 
+          mat-icon-button 
+          (click)="bookmarkMessage(message)"
+          matTooltip="Bookmark"
+          [class.bookmarked]="message.isBookmarked">
+          <mat-icon>{{ message.isBookmarked ? 'bookmark' : 'bookmark_border' }}</mat-icon>
+        </button>
+        
+        <button 
+          mat-icon-button 
+          (click)="retryQuery(message)"
+          matTooltip="Retry"
+          *ngIf="message.type === 'error'">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div class="typing-indicator" *ngIf="isTyping" [@fadeInOut]>
+      <div class="typing-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <span class="typing-text">AI is thinking...</span>
+      <div class="processing-agents" *ngIf="processingAgents.length > 0">
+        <span>Processing with: {{ processingAgents.join(', ') }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suggestions Panel -->
+  <div class="suggestions-panel" *ngIf="showSuggestions && suggestions.length > 0" [@slideUp]>
+    <div class="suggestions-header">
+      <mat-icon>auto_awesome</mat-icon>
+      <span>Try asking:</span>
+    </div>
+    <div class="suggestion-grid">
+      <button 
+        *ngFor="let suggestion of suggestions" 
+        mat-stroked-button
+        class="suggestion-button"
+        (click)="selectSuggestion(suggestion)">
+        {{ suggestion }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    
+    <!-- Search Bar (optional) -->
+    <div class="search-bar" *ngIf="searchQuery">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search messages</mat-label>
+        <input 
+          matInput 
+          [(ngModel)]="searchQuery"
+          (input)="onSearchInput($event)"
+          placeholder="Search in conversation...">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <!-- Query Input -->
+    <div class="query-input-container">
+      <mat-form-field appearance="outline" class="query-field">
+        <mat-label>Ask me anything about risk management...</mat-label>
+        <textarea 
+          matInput
+          #queryInput
+          [(ngModel)]="currentQuery"
+          (keydown)="onKeyPress($event)"
+          [disabled]="isLoading"
+          placeholder="Type your question here..."
+          rows="2"
+          cdkTextareaAutosize
+          cdkAutosizeMinRows="2"
+          cdkAutosizeMaxRows="4">
+        </textarea>
+        
+        <!-- Input Actions -->
+        <div matSuffix class="input-actions">
+          
+          <!-- Voice Input Button -->
+          <button 
+            mat-icon-button 
+            type="button"
+            (click)="toggleVoiceInput()"
+            [class.active]="voiceInputEnabled"
+            matTooltip="Voice Input">
+            <mat-icon>{{ voiceInputEnabled ? 'mic' : 'mic_none' }}</mat-icon>
+          </button>
+          
+          <!-- Send Button -->
+          <button 
+            mat-icon-button 
+            type="button"
+            (click)="sendMessage()"
+            [disabled]="!currentQuery.trim() || isLoading"
+            matTooltip="Send"
+            class="send-button">
+            <mat-icon *ngIf="!isLoading">send</mat-icon>
+            <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+          </button>
+        </div>
+      </mat-form-field>
+    </div>
+
+    <!-- Input Helper Text -->
+    <div class="input-helper" *ngIf="!isLoading">
+      <span class="helper-text">
+        Press Enter to send, Shift+Enter for new line
+      </span>
+      <span class="feature-hints">
+        • Use natural language • Ask for charts • Request risk assessments
+      </span>
+    </div>
+  </div>
+</div>
